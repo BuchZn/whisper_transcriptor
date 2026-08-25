@@ -68,6 +68,10 @@ python transcriptor.py
 4. Once transcription is implemented, the resulting text will be produced
    from that audio file using Whisper.
 
+## Todo
+
+- [ ] Make options for output filename, Whisper model, and output file format
+
 ## License
 
 Licensed under the GNU General Public License v3.0 — see [LICENSE](LICENSE)

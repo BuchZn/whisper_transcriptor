@@ -2,7 +2,7 @@ import os
 import tkinter as tk
 import datetime
 import threading
-from moviepy.editor import *
+from moviepy import VideoFileClip
 from tkinter import filedialog as fd
 from tkinter.messagebox import showinfo
 from tkinter import ttk
@@ -17,16 +17,20 @@ class whisper_converter:
         self.root.resizable(False, False)
         self.root.geometry('400x150')
 
-        #Widget Inits
-
+        #Widget Inits\
         self.open_button = ttk.Button(text='Open a File',command=self.t_window)
         self.progressbar = ttk.Progressbar()
         self.info_label = ttk.Label()
+
         #Vars
         self.filename = ''
         self.audio_filename = ''
+        self.txt_filename = ''
         self.model= 'medium'
-        self.language = 'German' 
+        self.language = 'German'
+        self.result = '' 
+        self.short_fname = ''
+        self.date = ''
 
         self.open_button.pack(expand=True)
         self.info_label.place_forget()
@@ -70,11 +74,14 @@ class whisper_converter:
 
         self.root.after(0, lambda: self.info_label.config(text="Transcribing ..."))
         self.transcribe()
-        self.root.after(0, lambda: self.progressbar.step(100))
+        self.root.after(0, lambda: self.progressbar.step(90))
+
+        self.write_file()
 
         self.root.after(0, self.on_pipeline_done)
 
     def on_pipeline_done(self):
+        os.remove(self.audio_filename)
         self.progressbar.place_forget()
         self.info_label.place_forget()
 
@@ -82,9 +89,11 @@ class whisper_converter:
     def mp4_conv(self):
         video = VideoFileClip(self.filename)
         self.audio_filename = str(datetime.datetime.now())
-        self.audio_filename = self.audio_filename.replace(":","_")
+        self.audio_filename = self.audio_filename.replace(":","-")
         self.audio_filename = self.audio_filename[:19]
+        self.date = self.audio_filename
         self.audio_filename = os.path.abspath(self.audio_filename)
+        self.txt_filename = self.audio_filename
         print(self.audio_filename)
 
 
@@ -97,18 +106,42 @@ class whisper_converter:
                 else:
                     exists = False
                     self.audio_filename = f"{self.audio_filename}_{i}.mp3"
-                    video.audio.write_audiofile(self.audio_filename)
         else:
             self.audio_filename = f"{self.audio_filename}.mp3"
-            video.audio.write_audiofile(self.audio_filename)
+        video.audio.write_audiofile(self.audio_filename)
 
         return 0
 
     def transcribe(self):
         model = whisper.load_model(self.model)
-        print(self.audio_filename)
-        result = model.transcribe(self.audio_filename)
-        print(result)
+
+        self.result = model.transcribe(self.audio_filename)
+        return 0
+
+    def write_file(self):
+        
+        if os.path.exists(f"{self.txt_filename}.txt"):
+            exists = True
+            i = 1
+            while exists:
+                if os.path.exists(f"{self.txt_filename}_{i}.txt"):
+                    i += 1
+                else:
+                    exists = False
+                    self.txt_filename = f"{self.txt_filename}_{i}.txt"
+        else:
+            self.txt_filename = f"{self.txt_filename}.txt"
+  
+        with open(self.txt_filename, "w", encoding="utf-8") as f:
+            f.write(f"Meeting from {self.date}\n")
+
+            txts = self.result['text'].split('.')
+
+            for txt in txts:
+                f.write(f"{txt}\n")
+
+        f.close()
+
         return 0
 
 
