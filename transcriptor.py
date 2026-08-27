@@ -69,6 +69,10 @@ class whisper_converter:
 
 
     def run_pipeline(self):
+
+        #Threaded Pipeline so main window(root.mainloop) can stay active
+        #and the Widgets (porgressbar & info_label) can get updated.
+        
         self.mp4_conv()
         self.root.after(0, lambda: self.progressbar.step(50))
 
@@ -81,6 +85,9 @@ class whisper_converter:
         self.root.after(0, self.on_pipeline_done)
 
     def on_pipeline_done(self):
+        #Garbage remover
+        #removing of audio file could be made optional in future
+        
         os.remove(self.audio_filename)
         self.progressbar.place_forget()
         self.info_label.place_forget()
